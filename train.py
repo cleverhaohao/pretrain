@@ -27,7 +27,7 @@ class CausalSelfAttention(nn.Module):
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
   
         y = F.scaled_dot_product_attention(q, k, v, is_causal=True) # flash attention
-        
+
         y = y.transpose(1, 2).contiguous().view(B, T, C)
    
         y = self.c_proj(y)
@@ -205,7 +205,7 @@ print(f"using device: {device}")
 train_loader = DataLoaderLite(B=16, T=1024)
 torch.set_float32_matmul_precision('high')
 
-model = GPT(GPTConfig())
+model = GPT(GPTConfig(vocab_size=50304))
 model.to(device)
 model = torch.compile(model)
 
