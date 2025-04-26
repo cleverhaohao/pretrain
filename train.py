@@ -26,10 +26,8 @@ class CausalSelfAttention(nn.Module):
         q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) 
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
   
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        att = att.masked_fill(self.bias[:,:,:T,:T] == 0, float('-inf'))
-        att = F.softmax(att, dim=-1)
-        y = att @ v
+        y = F.scaled_dot_product_attention(q, k, v, is_causal=True) # flash attention
+        
         y = y.transpose(1, 2).contiguous().view(B, T, C)
    
         y = self.c_proj(y)
@@ -209,6 +207,7 @@ torch.set_float32_matmul_precision('high')
 
 model = GPT(GPTConfig())
 model.to(device)
+model = torch.compile(model)
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
 for i in range(50):
